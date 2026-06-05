@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/naomansaeed/express-notes/issues"
   },
-  "homepage": "https://github.com/naomansaeed/express-notes#readme"
+  "homepage": "https://github.com/naomansaeed/express-notes#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
 }
