@@ -36,7 +36,7 @@ async function loadNotes() {
 // In Express, we just use app.get()! Express handles the URL and Method matching for us.
 app.get('/notes', async (req, res) => {
   
-  const notes = [{ id: 1, text: "Learn Express.js" }];
+  const notes = await loadNotes();
 
   // -------------------------------------------------------------------
   // SOLUTION TO PAIN POINTS 3 & 4: HEADERS AND JSON STRINGIFICATION
@@ -48,6 +48,19 @@ app.get('/notes', async (req, res) => {
   // It automatically sets the status to 200, sets the correct headers, 
   // and converts our JavaScript object into a JSON string behind the scenes.
   res.status(200).json(notes);
+});
+
+// read a single note using GET method
+app.get('/notes/:id', async(req, res) => {
+    // load notes from the file
+    const notes = await loadNotes();
+    // notes id from request, parsed into integer
+    const notesID =  parseInt(req.params.id);
+    // using find() method to locate the exact note
+    const note = notes.find(note => note.id === notesID);
+    // parse the output as JSON
+    //return JSON.parse(note.text); // I used the old way by mistake. It gave error.
+    res.json(note);
 });
 
 // -------------------------------------------------------------------
@@ -65,4 +78,4 @@ app.listen(PORT, () => {
   console.log(`Express server is running smoothly on http://localhost:${PORT}`);
 });
 
-console.log(await loadNotes());
+//console.log(await loadNotes());
