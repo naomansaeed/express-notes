@@ -20,8 +20,13 @@ const app = express();
 const PORT = 3000;
 
 async function loadNotes() {
-    const content = await readFile (dataFilePath, 'utf-8');
-    return JSON.parse(content);
+    try {
+        const content = await readFile (dataFilePath, 'utf-8');
+        return JSON.parse(content);
+    } catch (error) {
+        console.log(error);
+        return [];
+    }
 }
 
 // -------------------------------------------------------------------
