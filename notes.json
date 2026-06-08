@@ -1,4 +1,14 @@
 [
-  { "id": 1, "text": "Learn Express.js" },
-  { "id": 2, "text": "Build a REST API" }
+  {
+    "id": 1,
+    "text": "Learn Express.js"
+  },
+  {
+    "id": 2,
+    "text": "Build a REST API"
+  },
+  {
+    "id": 3,
+    "text": "Buy groceries"
+  }
 ]

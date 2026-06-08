@@ -17,6 +17,7 @@ import express from 'express';
 
 // 2. We initialize Express. This 'app' object is our new steering wheel.
 const app = express();
+app.use(express.json());
 const PORT = 3000;
 
 async function loadNotes() {
@@ -58,9 +59,32 @@ app.get('/notes/:id', async(req, res) => {
     const notesID =  parseInt(req.params.id);
     // using find() method to locate the exact note
     const note = notes.find(note => note.id === notesID);
+    // check if data does not exist
+    if (!note) {
+        return res.status(404).json({error: "Item not found"});
+    }
     // parse the output as JSON
     //return JSON.parse(note.text); // I used the old way by mistake. It gave error.
     res.json(note);
+});
+
+// route for POST
+app.post('/notes', async (req, res) => {
+    // load notes from the file
+    const notes = await loadNotes();
+    //extract data from request body
+    const entry = req.body.text;
+    // create newNote object
+    const newNote = {
+        id: notes.length + 1,
+        text: entry
+    };
+    //push newNote to the notes array
+    notes.push(newNote);
+    // save back to the external file
+    await writeFile(dataFilePath, JSON.stringify(notes, null, 2));
+    //sending status code for confirmation
+    res.status(201).json({mesaage:'note created', note:newNote});
 });
 
 // -------------------------------------------------------------------
