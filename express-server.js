@@ -74,9 +74,16 @@ app.post('/notes', async (req, res) => {
     const notes = await loadNotes();
     //extract data from request body
     const entry = req.body.text;
+    //Following code is for creating reasonable unique / maximum value ID
+    //extract existing ids into a new array
+    const ids = notes.map(note => note.id);
+    // find the highest number in the array. if empty, assign 0
+    const maxId = ids.length > 0 ? Math.max(...ids) : 0 ;
+    //new id is highest value + 1
+    //const newId = maxId + 1;
     // create newNote object
     const newNote = {
-        id: notes.length + 1,
+        id: maxId + 1,
         text: entry
     };
     //push newNote to the notes array
@@ -84,7 +91,7 @@ app.post('/notes', async (req, res) => {
     // save back to the external file
     await writeFile(dataFilePath, JSON.stringify(notes, null, 2));
     //sending status code for confirmation
-    res.status(201).json({mesaage:'note created', note:newNote});
+    res.status(201).json({message:'note created', note:newNote});
 });
 
 // -------------------------------------------------------------------
