@@ -94,6 +94,22 @@ app.post('/notes', async (req, res) => {
     res.status(201).json({message:'note created', note:newNote});
 });
 
+// The route for DELETE request
+app.delete('/notes/:id', async(req,res) => {
+    // Load the notes from the file
+    const notes = await loadNotes();
+    // get id from req.params and parse into int
+    const id = parseInt(req.params.id);
+    // extracting existing ids into new array
+    //const ids = notes.map(note => note.id);
+    // filter out the specified id and keep only the remaing ones.
+    const filtered = notes.filter(note => note.id !== id);
+    // save the new filtered array back to the file
+    await writeFile(dataFilePath, JSON.stringify(filtered, null, 2));
+    // send response code and message
+    res.status(200).json({message:'Deletion successful!'});
+});
+
 // -------------------------------------------------------------------
 // SOLUTION TO PAIN POINT 5: HANDLING 404s (NOT FOUND)
 // -------------------------------------------------------------------
