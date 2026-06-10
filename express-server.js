@@ -99,12 +99,21 @@ app.post('/notes', async (req, res) => {
 app.delete('/notes/:id', async(req,res) => {
     // Load the notes from the file
     const notes = await loadNotes();
+    // get total size of the existing array
+    const originalCount = notes.length;
     // get id from req.params and parse into int
     const id = parseInt(req.params.id);
+
     // extracting existing ids into new array
     //const ids = notes.map(note => note.id);
+
     // filter out the specified id and keep only the remaing ones.
     const filtered = notes.filter(note => note.id !== id);
+    // if the note didn't originally exist, array length hasn't changed.
+    if (filtered.length === originalCount) {
+        // if this statement is true, that means nothing was removed because the not wasn't found.
+        return res.status(404).json({ error: "Note not found" });
+    }
     // save the new filtered array back to the file
     await writeFile(dataFilePath, JSON.stringify(filtered, null, 2));
     // send response code and message
@@ -125,11 +134,12 @@ app.put('/notes/:id', async (req, res) => {
     if (!targetNote) {
         return res.status(404).json({error: "Item not found"});
     } 
-    targetNote.text = entry;
+    // if found, update the text of the targetNote
+    targetNote.text = entry; // alternate method: targetNote.text = req.body.text also works.
     // save the updated note back to the file
     await writeFile(dataFilePath, JSON.stringify(notes, null, 2));
     // sending response message and code
-    res.status(200).json({message:'Note edited successfully.', note: `${targetNote.text}`});
+    res.status(200).json({message:'Note edited successfully.', data: `${targetNote}`});
 });
 
 // -------------------------------------------------------------------
