@@ -14,6 +14,7 @@ const dataFilePath = join (__dirname, 'notes.json');
 // 1. We import the 'express' package instead of the raw 'http' module.
 // Because we added "type": "module" to package.json, we use the modern 'import' syntax.
 import express from 'express';
+import { text } from 'node:stream/consumers';
 
 // 2. We initialize Express. This 'app' object is our new steering wheel.
 const app = express();
@@ -108,6 +109,27 @@ app.delete('/notes/:id', async(req,res) => {
     await writeFile(dataFilePath, JSON.stringify(filtered, null, 2));
     // send response code and message
     res.status(200).json({message:'Deletion successful!'});
+});
+
+// The route for PUT request to edit a record by id
+app.put('/notes/:id', async (req, res) => {
+    //Loading the notes from file
+    const notes = await loadNotes();
+    // Getting id value from request params and parsing it into int
+    const noteId = parseInt(req.params.id);
+    // storing note text from req.body to update the existing text
+    const entry = req.body.text;
+    // Using find() to locate the specific note in the array
+    let targetNote = notes.find(note => note.id === noteId);
+    // if target note is not found, give 404 error
+    if (!targetNote) {
+        return res.status(404).json({error: "Item not found"});
+    } 
+    targetNote.text = entry;
+    // save the updated note back to the file
+    await writeFile(dataFilePath, JSON.stringify(notes, null, 2));
+    // sending response message and code
+    res.status(200).json({message:'Note edited successfully.', note: `${targetNote.text}`});
 });
 
 // -------------------------------------------------------------------
