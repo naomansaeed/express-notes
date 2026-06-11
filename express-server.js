@@ -1,6 +1,6 @@
 // express-server.js
 import {readFile, writeFile} from 'node:fs/promises';
-
+import { body, validationResult } from 'express-validator';
 import { fileURLToPath} from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -20,6 +20,13 @@ import { text } from 'node:stream/consumers';
 const app = express();
 app.use(express.json());
 const PORT = 3000;
+
+// Defining an array of validation rules
+const validateNoteCreation = [
+    body('text')
+    .isString().withMessage('text field must be a string')
+    .notEmpty().withMessage('text field cannot be empty')
+]
 
 async function loadNotes() {
     try {
@@ -70,7 +77,15 @@ app.get('/notes/:id', async(req, res) => {
 });
 
 // route for POST
-app.post('/notes', async (req, res) => {
+app.post('/notes', validateNoteCreation, async (req, res) => {
+    // extracting any errors in validation results
+    const errors = validationResult(req);
+    // if any errors occured, the array will not be empty
+    if (!errors.isEmpty()) {
+        // if error found, we send 400.
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     // load notes from the file
     const notes = await loadNotes();
     //extract data from request body
@@ -139,7 +154,7 @@ app.put('/notes/:id', async (req, res) => {
     // save the updated note back to the file
     await writeFile(dataFilePath, JSON.stringify(notes, null, 2));
     // sending response message and code
-    res.status(200).json({message:'Note edited successfully.', data: `${targetNote}`});
+    res.status(200).json({message:'Note edited successfully.', data: targetNote});
 });
 
 // -------------------------------------------------------------------
