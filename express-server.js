@@ -77,37 +77,42 @@ app.get('/notes/:id', async(req, res) => {
 });
 
 // route for POST
-app.post('/notes', validateNoteCreation, async (req, res) => {
-    // extracting any errors in validation results
-    const errors = validationResult(req);
-    // if any errors occured, the array will not be empty
-    if (!errors.isEmpty()) {
-        // if error found, we send 400.
-        return res.status(400).json({ errors: errors.array() });
+app.post('/notes', validateNoteCreation, async (req, res, next) => {
+        // extracting any errors in validation results
+        const errors = validationResult(req);
+        // if any errors occured, the array will not be empty
+        if (!errors.isEmpty()) {
+            // if error found, we send 400.
+            return res.status(400).json({ errors: errors.array() });
+        }
+    try {
+        //throw new Error("Simulated database crash!"); // This is a simulated server side error.
+        // load notes from the file
+        const notes = await loadNotes();
+        //extract data from request body
+        const entry = req.body.text;
+        //Following code is for creating reasonable unique / maximum value ID
+        //extract existing ids into a new array
+        const ids = notes.map(note => note.id);
+        // find the highest number in the array. if empty, assign 0
+        const maxId = ids.length > 0 ? Math.max(...ids) : 0 ;
+        //new id is highest value + 1
+        //const newId = maxId + 1;
+        // create newNote object
+        const newNote = {
+            id: maxId + 1,
+            text: entry
+        };
+        //push newNote to the notes array
+        notes.push(newNote);
+        // save back to the external file
+        await writeFile(dataFilePath, JSON.stringify(notes, null, 2));
+        //sending status code for confirmation
+        res.status(201).json({message:'note created', note:newNote});
+    } catch (error) {
+        //errors happening inside the 'await' block are expected to be passed to the next().
+        next(error);
     }
-
-    // load notes from the file
-    const notes = await loadNotes();
-    //extract data from request body
-    const entry = req.body.text;
-    //Following code is for creating reasonable unique / maximum value ID
-    //extract existing ids into a new array
-    const ids = notes.map(note => note.id);
-    // find the highest number in the array. if empty, assign 0
-    const maxId = ids.length > 0 ? Math.max(...ids) : 0 ;
-    //new id is highest value + 1
-    //const newId = maxId + 1;
-    // create newNote object
-    const newNote = {
-        id: maxId + 1,
-        text: entry
-    };
-    //push newNote to the notes array
-    notes.push(newNote);
-    // save back to the external file
-    await writeFile(dataFilePath, JSON.stringify(notes, null, 2));
-    //sending status code for confirmation
-    res.status(201).json({message:'note created', note:newNote});
 });
 
 // The route for DELETE request
@@ -136,7 +141,15 @@ app.delete('/notes/:id', async(req,res) => {
 });
 
 // The route for PUT request to edit a record by id
-app.put('/notes/:id', async (req, res) => {
+app.put('/notes/:id', validateNoteCreation, async (req, res) => {
+    // extracting any errors in validation results
+    const errors = validationResult(req);
+    // if any errors occured, the array will not be empty
+    if (!errors.isEmpty()) {
+        // if error found, we send 400.
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     //Loading the notes from file
     const notes = await loadNotes();
     // Getting id value from request params and parsing it into int
@@ -167,9 +180,13 @@ app.use((req, res) => {
   res.status(404).json({ error: "Route not found!" });
 });
 
+app.use((err, req, res, next) => {
+    console.error("Global Error Caught:", err.message);
+    // Sending generic 500 server problem error
+    res.status(500).json({ error: "Something went wrong on the server!" });
+});
+
 // 3. Start the server. Notice we call app.listen() instead of server.listen().
 app.listen(PORT, () => {
   console.log(`Express server is running smoothly on http://localhost:${PORT}`);
 });
-
-//console.log(await loadNotes());
