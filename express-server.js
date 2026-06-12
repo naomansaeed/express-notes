@@ -47,6 +47,17 @@ app.get('/notes', async (req, res) => {
   
   const notes = await loadNotes();
 
+  //extract serach from query
+  const searchTerm = req.query.search;
+  //checking if searchTerm was sent in the url
+  if (searchTerm) {
+     // filter notes without case sensitivity
+     const filteredNotes = notes.filter(note => note.text.toLowerCase().includes(searchTerm.toLowerCase()));
+     //note.text.includes(searchTerm));  //notes.text.toLowerCase().includes(searchTerm.toLowerCase())); this didn't work at all
+     // send response with json
+     return res.status(200).json(filteredNotes);
+   }
+
   // -------------------------------------------------------------------
   // SOLUTION TO PAIN POINTS 3 & 4: HEADERS AND JSON STRINGIFICATION
   // -------------------------------------------------------------------
