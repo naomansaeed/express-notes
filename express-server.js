@@ -3,13 +3,14 @@ import {readFile, writeFile} from 'node:fs/promises';
 import { body, validationResult } from 'express-validator';
 import { fileURLToPath} from 'node:url';
 import { dirname, join } from 'node:path';
+import notesRouter from './routes/notes.js';
 
 // Creating universals
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // path to data storage file
-const dataFilePath = join (__dirname, 'notes.json');
+export const dataFilePath = join (__dirname, 'notes.json');
 
 // 1. We import the 'express' package instead of the raw 'http' module.
 // Because we added "type": "module" to package.json, we use the modern 'import' syntax.
@@ -20,6 +21,8 @@ import { text } from 'node:stream/consumers';
 const app = express();
 app.use(express.json());
 const PORT = 3000;
+
+app.use('/notes', notesRouter);
 
 // Defining an array of validation rules
 const validateNoteCreation = [
@@ -43,6 +46,7 @@ async function loadNotes() {
 // -------------------------------------------------------------------
 // In raw Node, we had to write: if (req.url === '/notes' && req.method === 'GET')
 // In Express, we just use app.get()! Express handles the URL and Method matching for us.
+/*
 app.get('/notes', async (req, res) => {
   
   const notes = await loadNotes();
@@ -68,7 +72,7 @@ app.get('/notes', async (req, res) => {
   // It automatically sets the status to 200, sets the correct headers, 
   // and converts our JavaScript object into a JSON string behind the scenes.
   res.status(200).json(notes);
-});
+}); */
 
 // read a single note using GET method
 app.get('/notes/:id', async(req, res) => {
