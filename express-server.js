@@ -1,6 +1,5 @@
 // express-server.js
-import {readFile, writeFile} from 'node:fs/promises';
-import { body, validationResult } from 'express-validator';
+import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath} from 'node:url';
 import { dirname, join } from 'node:path';
 import notesRouter from './routes/notes.js';
@@ -24,13 +23,8 @@ const PORT = 3000;
 
 app.use('/notes', notesRouter);
 
-// Defining an array of validation rules
-const validateNoteCreation = [
-    body('text')
-    .isString().withMessage('text field must be a string')
-    .notEmpty().withMessage('text field cannot be empty')
-]
 
+/*
 async function loadNotes() {
     try {
         const content = await readFile (dataFilePath, 'utf-8');
@@ -39,7 +33,7 @@ async function loadNotes() {
         console.log(error);
         return [];
     }
-}
+} */
 
 // -------------------------------------------------------------------
 // SOLUTION TO PAIN POINTS 1 & 2: ROUTING AND HTTP METHODS
@@ -75,7 +69,7 @@ app.get('/notes', async (req, res) => {
 }); */
 
 // read a single note using GET method
-app.get('/notes/:id', async(req, res) => {
+/* app.get('/notes/:id', async(req, res) => {
     // load notes from the file
     const notes = await loadNotes();
     // notes id from request, parsed into integer
@@ -89,10 +83,10 @@ app.get('/notes/:id', async(req, res) => {
     // parse the output as JSON
     //return JSON.parse(note.text); // I used the old way by mistake. It gave error.
     res.json(note);
-});
+}); */
 
-// route for POST
-app.post('/notes', validateNoteCreation, async (req, res, next) => {
+// route for POST 
+/* app.post('/notes', validateNoteCreation, async (req, res, next) => {
         // extracting any errors in validation results
         const errors = validationResult(req);
         // if any errors occured, the array will not be empty
@@ -128,9 +122,10 @@ app.post('/notes', validateNoteCreation, async (req, res, next) => {
         //errors happening inside the 'await' block are expected to be passed to the next().
         next(error);
     }
-});
+}); */
 
 // The route for DELETE request
+/*
 app.delete('/notes/:id', async(req,res) => {
     // Load the notes from the file
     const notes = await loadNotes();
@@ -153,9 +148,10 @@ app.delete('/notes/:id', async(req,res) => {
     await writeFile(dataFilePath, JSON.stringify(filtered, null, 2));
     // send response code and message
     res.status(200).json({message:'Deletion successful!'});
-});
+}); */
 
 // The route for PUT request to edit a record by id
+/*
 app.put('/notes/:id', validateNoteCreation, async (req, res) => {
     // extracting any errors in validation results
     const errors = validationResult(req);
@@ -183,7 +179,7 @@ app.put('/notes/:id', validateNoteCreation, async (req, res) => {
     await writeFile(dataFilePath, JSON.stringify(notes, null, 2));
     // sending response message and code
     res.status(200).json({message:'Note edited successfully.', data: targetNote});
-});
+}); */
 
 // -------------------------------------------------------------------
 // SOLUTION TO PAIN POINT 5: HANDLING 404s (NOT FOUND)

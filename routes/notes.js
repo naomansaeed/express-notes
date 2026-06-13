@@ -3,15 +3,25 @@ import express from 'express';
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-
+import { body, validationResult } from 'express-validator';
 
 // Creating a new router instance
 const router = express.Router();
+
 // creating universals
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname (__filename);
+
 // Path to data storage file
 const dataFilePath = join(__dirname, '../notes.json');
+
+// Defining an array of validation rules
+const validateNoteCreation = [
+    body('text')
+    .isString().withMessage('text field must be a string')
+    .notEmpty().withMessage('text field cannot be empty')
+]
+
 //load the notes in one place and call this function from anywhere.
 async function loadNotes() {
     try {
@@ -48,6 +58,120 @@ router.get('/', async (req, res) => {
   // It automatically sets the status to 200, sets the correct headers, 
   // and converts our JavaScript object into a JSON string behind the scenes.
   res.status(200).json(notes);
+}); 
+
+// read a single note using GET method
+router.get('/:id', async(req, res) => {
+    // load notes from the file
+    const notes = await loadNotes();
+    // notes id from request, parsed into integer
+    const notesID =  parseInt(req.params.id);
+    // using find() method to locate the exact note
+    const note = notes.find(note => note.id === notesID);
+    // check if data does not exist
+    if (!note) {
+        return res.status(404).json({error: "Item not found"});
+    }
+    // parse the output as JSON
+    res.json(note); //return JSON.parse(note.text); // I used the old way by mistake. It gave error.
+});
+
+// route for POST
+router.post('/', validateNoteCreation, async (req, res, next) => {
+        // extracting any errors in validation results
+        const errors = validationResult(req);
+        // if any errors occured, the array will not be empty
+        if (!errors.isEmpty()) {
+            // if error found, we send 400.
+            return res.status(400).json({ errors: errors.array() });
+        }
+    try {
+        //throw new Error("Simulated database crash!"); // This is a simulated server side error.
+        
+        // load notes from the file
+        const notes = await loadNotes();
+        //extract data from request body
+        const entry = req.body.text;
+        //Following code is for creating reasonable unique / maximum value ID
+        
+        //extract existing ids into a new array
+        const ids = notes.map(note => note.id);
+        // find the highest number in the array. if empty, assign 0
+        const maxId = ids.length > 0 ? Math.max(...ids) : 0 ;
+        
+        //new id is highest value + 1
+        //const newId = maxId + 1;
+        
+        // create newNote object
+        const newNote = {
+            id: maxId + 1,
+            text: entry
+        };
+        //push newNote to the notes array
+        notes.push(newNote);
+        // save back to the external file
+        await writeFile(dataFilePath, JSON.stringify(notes, null, 2));
+        //sending status code for confirmation
+        res.status(201).json({message:'note created', note:newNote});
+    } catch (error) {
+        //errors happening inside the 'await' block are expected to be passed to the next().
+        next(error);
+    }
+});
+
+// The route for PUT request to edit a record by id
+router.put('/:id', validateNoteCreation, async (req, res) => {
+    // extracting any errors in validation results
+    const errors = validationResult(req);
+    // if any errors occured, the array will not be empty
+    if (!errors.isEmpty()) {
+        // if error found, we send 400.
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    //Loading the notes from file
+    const notes = await loadNotes();
+    // Getting id value from request params and parsing it into int
+    const noteId = parseInt(req.params.id);
+    // storing note text from req.body to update the existing text
+    const entry = req.body.text;
+    // Using find() to locate the specific note in the array
+    let targetNote = notes.find(note => note.id === noteId);
+    // if target note is not found, give 404 error
+    if (!targetNote) {
+        return res.status(404).json({error: "Item not found"});
+    } 
+    // if found, update the text of the targetNote
+    targetNote.text = entry; // alternate method: targetNote.text = req.body.text also works.
+    // save the updated note back to the file
+    await writeFile(dataFilePath, JSON.stringify(notes, null, 2));
+    // sending response message and code
+    res.status(200).json({message:'Note edited successfully.', data: targetNote});
+});
+
+// The route for DELETE request
+router.delete('/:id', async(req,res) => {
+    // Load the notes from the file
+    const notes = await loadNotes();
+    // get total size of the existing array
+    const originalCount = notes.length;
+    // get id from req.params and parse into int
+    const id = parseInt(req.params.id);
+
+    // extracting existing ids into new array
+    //const ids = notes.map(note => note.id);
+
+    // filter out the specified id and keep only the remaing ones.
+    const filtered = notes.filter(note => note.id !== id);
+    // if the note didn't originally exist, array length hasn't changed.
+    if (filtered.length === originalCount) {
+        // if this statement is true, that means nothing was removed because the not wasn't found.
+        return res.status(404).json({ error: "Note not found" });
+    }
+    // save the new filtered array back to the file
+    await writeFile(dataFilePath, JSON.stringify(filtered, null, 2));
+    // send response code and message
+    res.status(200).json({message:'Deletion successful!'});
 });
 
 // Exporting router so the main file can use it.
